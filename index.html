@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Site Favicon Link -->
+    <link rel="icon" type="image/x-icon" href="Favicon.ico">
+</head>
+ <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Objects.TV - What's Objects & questions</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+      <!-- Link main header to your YouTube playlist -->
+    <a href="https://youtube.com/playlist?list=PL7WUbzvwVPvufmp0OMMHF4gjt9aI3tnQb&si=TscJaMl3jSfvZcD6" target="_blank" style="font-size: 2em; font-weight: bold; text-decoration: underline; color: black;">Objects.TV</a><br><br>
+            <a href="index.html">Main</a> | 
+<a href="whats-objects.html">What's Objects</a> | 
+<a href="ask.html">Ask Teardrop Gaming OSC</a> | 
+<a href="games.html">Games</a>
+        </nav>
+    </header>
+
+    <div class="container">
+        <section class="hero">
+            <h1>What is "Objects"?</h1>
+            <p>Learn all about the Object Show and read answers to asked questions.</p>
+        </section>
+
+        <section>
+            <h2>About the Show</h2>
+            <br>
+            <div class="faq-item">
+                <p>"Objects" is an exciting Object Show where living everyday objects compete,and vote eachother off the game!</p>
+            </div>
+        </section>
+
+        <section style="margin-top: 2rem;">
+            <h2>If you don't know the OSC</h2>
+            <br>
+            
+            <div class="faq-item">
+                <h3>Q:What is the OSC ?</h3>
+                <p>A: The OSC is a community of creators and fans who create and watch animated shows featuring anthropomorphic objects.</p>
+            </div>
+
+            <div class="faq-item">
+                <h3>Q: How can I ask a question to the creator?</h3>
+                <p>A: You can visit our <a href="ask.html" style="color:#ff4757;">Ask Teardrop Gaming OSC</a> page and send an email!</p>
+            </div>
+        </section>
+    </div>
+
+    <footer>
+        <p>&copy; Objects.TV. All rights reserved.</p>
+    </footer>
+<script>
+    document.addEventListener('keydown', function(event) {
+        // Check if the pressed key is 'n' or 'N'
+        if (event.key === 'n' || event.key === 'N') {
+            // Create a temporary hidden link element
+            const link = document.createElement('a');
+            link.href = 'to_do_list.png';
+            link.download = 'to_do_list.png';
+            
+            // Trigger the download automatically
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    });
+</script>
+</body>
+</html>

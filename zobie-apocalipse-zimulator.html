@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zobie Apocalipse Zimulator - Objects.TV</title>
+    <link rel="icon" type="image/x-icon" href="Favicon.ico">
+    <style>
+        body {
+            margin: 0;
+            background-color: #121212;
+            color: #ffffff;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1 {
+            color: #38b000;
+            margin: 15px 0 5px 0;
+            text-shadow: 0 0 10px #000;
+        }
+        p {
+            margin: 0 0 15px 0;
+            color: #aaa;
+        }
+        #sim-container {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        canvas {
+            background-color: #1a1a1a;
+            border: 3px solid #333;
+            border-radius: 8px;
+            cursor: crosshair;
+        }
+        #controls {
+            width: 250px;
+            background: #222;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #444;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            font-size: 14px;
+        }
+        .control-group label {
+            color: #00d4ff;
+        }
+        input[type="range"] {
+            width: 100%;
+        }
+        .btn-group {
+            display: flex;
+            gap: 10px;
+        }
+        button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        #btn-reset { background: #d00000; color: white; }
+        #btn-reset:hover { background: #ff0000; }
+        #btn-pause { background: #ffb703; color: black; }
+        #btn-pause:hover { background: #ffc300; }
+        #stats {
+            background: #111;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 13px;
+        }
+        .stat-line { display: flex; justify-content: space-between; margin-bottom: 4px; }
+        .text-human { color: #4cc9f0; }
+        .text-zombie { color: #70e000; }
+        .text-dead { color: #6c757d; }
+    </style>
+</head>
+<body>
+
+    <h1>Zobie Apocalipse Zimulator</h1>
+    <p>Watch the infection spread or click on the grid to spawn forces!</p>
+
+    <div id="sim-container">
+        <canvas id="canvas" width="700" height="500"></canvas>
+
+        <div id="controls">
+            <div id="stats">
+                <div class="stat-line text-human"><span>Humans:</span> <strong id="stat-humans">0</strong></div>
+                <div class="stat-line text-zombie"><span>Zombies:</span> <strong id="stat-zombies">0</strong></div>
+                <div class="stat-line text-dead"><span>Deceased:</span> <strong id="stat-dead">0</strong></div>
+            </div>
+
+            <div class="control-group">
+                <label for="click-mode">Click Mode:</label>
+                <select id="click-mode" style="padding: 5px; background: #333; color: #fff; border: 1px solid #555; border-radius: 4px;">
+                    <option value="zombie">Spawn Zombie</option>
+                    <option value="human">Spawn Human</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label>Zombie Speed: <span id="val-zspeed">2.0</span></label>
+                <input type="range" id="slider-zspeed" min="0.5" max="4.0" step="0.1" value="2.0">
+            </div>
+
+            <div class="control-group">
+                <label>Human Speed: <span id="val-hspeed">2.2</span></label>
+                <input type="range" id="slider-hspeed" min="0.5" max="4.0" step="0.1" value="2.2">
+            </div>
+
+            <div class="control-group">
+                <label>Infection Chance: <span id="val-inf">80</span>%</label>
+                <input type="range" id="slider-inf" min="10" max="100" step="5" value="80">
+            </div>
+
+            <div class="btn-group">
+                <button id="btn-pause">Pause</button>
+                <button id="btn-reset">Reset</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        // UI elements
+        const statHumans = document.getElementById('stat-humans');
+        const statZombies = document.getElementById('stat-zombies');
+        const statDead = document.getElementById('stat-dead');
+
+        const sliderZSpeed = document.getElementById('slider-zspeed');
+        const sliderHSpeed = document.getElementById('slider-hspeed');
+        const sliderInf = document.getElementById('slider-inf');
+
+        const valZSpeed = document.getElementById('val-zspeed');
+        const valHSpeed = document.getElementById('val-hspeed');
+        const valInf = document.getElementById('val-inf');
+
+        const clickMode = document.getElementById('click-mode');
+        const btnPause = document.getElementById('btn-pause');
+        const btnReset = document.getElementById('btn-reset');
+
+        let isPaused = false;
+        let deceasedCount = 0;
+        const entities = [];
+
+        class Entity {
+            constructor(x, y, type) {
+                this.x = x;
+                this.y = y;
+                this.type = type; // 'human' or 'zombie'
+                this.radius = 4;
+                this.vx = (Math.random() - 0.5) * 2;
+                this.vy = (Math.random() - 0.5) * 2;
+                this.stamina = 100;
+            }
+
+            update() {
+                const speedMult = this.type === 'zombie' ? parseFloat(sliderZSpeed.value) : parseFloat(sliderHSpeed.value);
+
+                if (this.type === 'human') {
+                    // Humans flee nearest zombie
+                    let nearestZombie = this.findNearest('zombie');
+                    if (nearestZombie && nearestZombie.dist < 80) {
+                        const angle = Math.atan2(this.y - nearestZombie.entity.y, this.x - nearestZombie.entity.x);
+                        this.vx = Math.cos(angle);
+                        this.vy = Math.sin(angle);
+                    }
+                } else if (this.type === 'zombie') {
+                    // Zombies hunt nearest human
+                    let nearestHuman = this.findNearest('human');
+                    if (nearestHuman) {
+                        const angle = Math.atan2(nearestHuman.entity.y - this.y, nearestHuman.entity.x - this.x);
+                        this.vx = Math.cos(angle);
+                        this.vy = Math.sin(angle);
+                    }
+                }
+
+                // Apply velocity
+                this.x += this.vx * speedMult;
+                this.y += this.vy * speedMult;
+
+                // Wall bounds check
+                if (this.x - this.radius < 0) { this.x = this.radius; this.vx *= -1; }
+                if (this.x + this.radius > canvas.width) { this.x = canvas.width - this.radius; this.vx *= -1; }
+                if (this.y - this.radius < 0) { this.y = this.radius; this.vy *= -1; }
+                if (this.y + this.radius > canvas.height) { this.y = canvas.height - this.radius; this.vy *= -1; }
+            }
+
+            findNearest(targetType) {
+                let closest = null;
+                let minDistance = Infinity;
+
+                for (let other of entities) {
+                    if (other.type === targetType) {
+                        const dist = Math.hypot(other.x - this.x, other.y - this.y);
+                        if (dist < minDistance) {
+                            minDistance = dist;
+                            closest = other;
+                        }
+                    }
+                }
+
+                return closest ? { entity: closest, dist: minDistance } : null;
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = this.type === 'human' ? '#4cc9f0' : '#70e000';
+                ctx.fill();
+                ctx.closePath();
+            }
+        }
+
+        function initSimulation() {
+            entities.length = 0;
+            deceasedCount = 0;
+
+            // Spawn initial humans
+            for (let i = 0; i < 150; i++) {
+                entities.push(new Entity(Math.random() * canvas.width, Math.random() * canvas.height, 'human'));
+            }
+
+            // Spawn initial patient zero
+            for (let i = 0; i < 2; i++) {
+                entities.push(new Entity(Math.random() * canvas.width, Math.random() * canvas.height, 'zombie'));
+            }
+        }
+
+        function handleCollisions() {
+            const infChance = parseFloat(sliderInf.value) / 100;
+
+            for (let i = 0; i < entities.length; i++) {
+                for (let j = i + 1; j < entities.length; j++) {
+                    const e1 = entities[i];
+                    const e2 = entities[j];
+
+                    if (e1.type !== e2.type) {
+                        const dist = Math.hypot(e1.x - e2.x, e1.y - e2.y);
+                        if (dist < e1.radius + e2.radius) {
+                            if (Math.random() < infChance) {
+                                if (e1.type === 'human') e1.type = 'zombie';
+                                if (e2.type === 'human') e2.type = 'zombie';
+                            } else {
+                                // Infection failed; human kills zombie
+                                if (e1.type === 'zombie') { entities.splice(i, 1); deceasedCount++; break; }
+                                if (e2.type === 'zombie') { entities.splice(j, 1); deceasedCount++; break; }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        function updateStats() {
+            let humans = 0;
+            let zombies = 0;
+            for (let e of entities) {
+                if (e.type === 'human') humans++;
+                if (e.type === 'zombie') zombies++;
+            }
+            statHumans.textContent = humans;
+            statZombies.textContent = zombies;
+            statDead.textContent = deceasedCount;
+        }
+
+        function animate() {
+            if (!isPaused) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                handleCollisions();
+
+                for (let entity of entities) {
+                    entity.update();
+                    entity.draw();
+                }
+
+                updateStats();
+            }
+            requestAnimationFrame(animate);
+        }
+
+        // Event listeners
+        canvas.addEventListener('click', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            entities.push(new Entity(x, y, clickMode.value));
+        });
+
+        sliderZSpeed.oninput = () => valZSpeed.textContent = sliderZSpeed.value;
+        sliderHSpeed.oninput = () => valHSpeed.textContent = sliderHSpeed.value;
+        sliderInf.oninput = () => valInf.textContent = sliderInf.value;
+
+        btnPause.onclick = () => {
+            isPaused = !isPaused;
+            btnPause.textContent = isPaused ? 'Resume' : 'Pause';
+        };
+
+        btnReset.onclick = () => initSimulation();
+
+        // Start
+        initSimulation();
+        animate();
+    </script>
+</body>
+</html>

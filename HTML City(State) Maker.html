@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>HTML State/City Maker</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: sans-serif;
+      background-color: #000;
+    }
+    #ui {
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      background: rgba(0, 0, 0, 0.85);
+      color: #fff;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+      z-index: 10;
+      width: 230px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    #ui label {
+      font-size: 11px;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    #ui input[type="text"] {
+      width: calc(100% - 16px);
+      padding: 6px;
+      margin-top: 4px;
+      margin-bottom: 8px;
+      border: none;
+      border-radius: 4px;
+      font-size: 13px;
+    }
+    .color-control {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 4px;
+      margin-bottom: 8px;
+    }
+    #ui input[type="color"] {
+      border: none;
+      width: 36px;
+      height: 28px;
+      border-radius: 4px;
+      cursor: pointer;
+      background: none;
+    }
+    .flag-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 6px;
+      border-radius: 6px;
+    }
+    #flagPreview {
+      border: 1px solid #fff;
+      border-radius: 2px;
+      width: 60px;
+      height: 40px;
+    }
+    .save-flag-controls {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+    .save-flag-controls select {
+      padding: 6px;
+      border-radius: 4px;
+      border: none;
+      font-size: 12px;
+      font-weight: bold;
+      background: #444;
+      color: #fff;
+      cursor: pointer;
+    }
+    #ui button {
+      width: 100%;
+      padding: 8px;
+      margin-top: 4px;
+      border: none;
+      border-radius: 4px;
+      font-size: 13px;
+      background: #7b2cbf;
+      color: white;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    #ui button:hover {
+      background: #9d4edd;
+    }
+    #ui button.secondary {
+      background: #3a0ca3;
+    }
+    #ui button.secondary:hover {
+      background: #4cc9f0;
+      color: #000;
+    }
+    #ui button.download-btn {
+      background: #2a9d8f;
+      margin-top: 0;
+    }
+    #ui button.download-btn:hover {
+      background: #48cae4;
+      color: #000;
+    }
+    #ui button.movie-btn {
+      background: #e63946;
+      margin-top: 10px;
+      margin-bottom: 10px;
+    }
+    #ui button.movie-btn:hover {
+      background: #ff4d6d;
+    }
+    .image-upload-box {
+      margin-top: 4px;
+      margin-bottom: 10px;
+      background: rgba(255, 255, 255, 0.08);
+      padding: 8px;
+      border-radius: 6px;
+    }
+    .image-upload-box input[type="file"] {
+      font-size: 11px;
+      color: #ccc;
+      width: 100%;
+    }
+    #recStatus {
+      display: none;
+      color: #ff4d6d;
+      font-size: 11px;
+      font-weight: bold;
+      text-align: center;
+      margin-bottom: 6px;
+      animation: blink 1s infinite;
+    }
+    @keyframes blink {
+      0% { opacity: 1; }
+      50% { opacity: 0.3; }
+      100% { opacity: 1; }
+    }
+  </style>
+  <!-- Three.js & OrbitControls -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+
+  <div id="ui">
+    <h3 id="cityNameHeader" style="margin-top: 0; margin-bottom: 12px; color: #ffcc00;">DIHLAND</h3>
+    
+    <label for="cityName">City Name:</label>
+    <input type="text" id="cityName" value="DIHLAND" oninput="updateCityName(this.value)">
+
+    <label for="cityText">Word Layout (3D):</label>
+    <input type="text" id="cityText" value="DIIIIIIIIH">
+
+    <label>Or Upload Custom Image Layout:</label>
+    <div class="image-upload-box">
+      <input type="file" id="imageInput" accept="image/*" onchange="handleImageUpload(event)">
+    </div>
+
+    <!-- Movie Camera Recording Button -->
+    <div id="recStatus">🔴 RECORDING MOVIE (MP4)...</div>
+    <button id="movieBtn" class="movie-btn" onclick="startCameraMovie()">🎬 Movie Camera (AI Walkthrough)</button>
+    
+    <label>City Flag:</label>
+    <div class="flag-container">
+      <canvas id="flagPreview" width="120" height="80"></canvas>
+      <button class="secondary" style="margin:0; padding: 6px;" onclick="generateRandomFlag()">🎲 Randomize Flag</button>
+    </div>
+
+    <!-- Flag Download Controls -->
+    <div class="save-flag-controls">
+      <select id="flagFormat">
+        <option value="png">PNG</option>
+        <option value="jpeg">JPG</option>
+        <option value="ico">ICO</option>
+      </select>
+      <button class="download-btn" onclick="saveFlag()">💾 Save Flag</button>
+    </div>
+
+    <label for="groundHex">Ground Color (HEX):</label>
+    <div class="color-control">
+      <input type="color" id="groundPicker" value="#6a2c91" oninput="updateGroundFromPicker(this.value)">
+      <input type="text" id="groundHex" value="#6A2C91" style="margin:0;" oninput="updateGroundFromHex(this.value)">
+    </div>
+
+    <button class="secondary" onclick="randomizeGroundColor()">🎲 Random Ground Color</button>
+    <button onclick="generateCity()">🏗️ Generate City</button>
+  </div>
+
+  <script>
+    // 1. Setup Scene, Camera, Renderer
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x7ec0ee);
+    scene.fog = new THREE.FogExp2(0x7ec0ee, 0.0012);
+
+    const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 2000);
+    camera.position.set(0, 180, 260);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    document.body.appendChild(renderer.domElement);
+
+    // Smooth Orbit Controls
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.rotateSpeed = 0.7;
+    controls.zoomSpeed = 0.8;
+    controls.panSpeed = 0.8;
+    controls.minDistance = 20;
+    controls.maxDistance = 600;
+    controls.maxPolarAngle = Math.PI / 2 - 0.02;
+
+    // 2. Lighting
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.55);
+    scene.add(ambientLight);
+
+    const dirLight = new THREE.DirectionalLight(0xffffff, 0.85);
+    dirLight.position.set(150, 300, 150);
+    dirLight.castShadow = true;
+    dirLight.shadow.mapSize.width = 2048;
+    dirLight.shadow.mapSize.height = 2048;
+    scene.add(dirLight);
+
+    // 3. Ground Plane
+    const groundGeo = new THREE.PlaneGeometry(1200, 1200);
+    const groundMat = new THREE.MeshLambertMaterial({ color: 0x6a2c91 });
+    const ground = new THREE.Mesh(groundGeo, groundMat);
+    ground.rotation.x = -Math.PI / 2;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    // 4. Background Mountain Generator
+    function createMountainRange() {
+      const group = new THREE.Group();
+      const mountainMat = new THREE.MeshLambertMaterial({ color: 0x4a5568, flatShading: true });
+      const count = 28;
+      const radius = 550;
+
+      for (let i = 0; i < count; i++) {
+        const angle = (i / count) * Math.PI * 2;
+        const height = Math.random() * 120 + 80;
+        const width = Math.random() * 80 + 100;
+
+        const geo = new THREE.ConeGeometry(width, height, 5);
+        const mountain = new THREE.Mesh(geo, mountainMat);
+
+        const x = Math.cos(angle) * radius;
+        const z = Math.sin(angle) * radius;
+
+        mountain.position.set(x, height / 2 - 10, z);
+        mountain.rotation.y = Math.random() * Math.PI;
+        group.add(mountain);
+      }
+      scene.add(group);
+    }
+    createMountainRange();
+
+    let cityGroup = new THREE.Group();
+    scene.add(cityGroup);
+
+    let currentFlagTexture = null;
+    let customUploadedImage = null;
+
+    // Camera Animation State
+    let isRecordingMovie = false;
+    let movieStartTime = 0;
+    const movieDuration = 8000; // 8 seconds animation
+    let mediaRecorder = null;
+    let recordedChunks = [];
+
+    // UI Helpers
+    function updateCityName(val) {
+      document.getElementById('cityNameHeader').innerText = val || "Untitled City";
+    }
+
+    function setGroundColor(hexColor) {
+      groundMat.color.set(hexColor);
+    }
+
+    function updateGroundFromPicker(hex) {
+      document.getElementById('groundHex').value = hex.toUpperCase();
+      setGroundColor(hex);
+    }
+
+    function updateGroundFromHex(hex) {
+      if (/^#[0-9A-F]{6}$/i.test(hex)) {
+        document.getElementById('groundPicker').value = hex;
+        setGroundColor(hex);
+      }
+    }
+
+    function randomizeGroundColor() {
+      const randomColor = '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
+      document.getElementById('groundHex').value = randomColor.toUpperCase();
+      document.getElementById('groundPicker').value = randomColor;
+      setGroundColor(randomColor);
+    }
+
+    // Handle Image Upload
+    function handleImageUpload(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const img = new Image();
+          img.onload = function() {
+            customUploadedImage = img;
+            generateCity();
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    // Procedural Flag Creator
+    function generateRandomFlag() {
+      const canvas = document.getElementById('flagPreview');
+      const ctx = canvas.getContext('2d');
+      const w = canvas.width;
+      const h = canvas.height;
+
+      const getRandomColor = () => '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
+      const c1 = getRandomColor();
+      const c2 = getRandomColor();
+      const c3 = getRandomColor();
+
+      const styles = ['horizontal', 'vertical', 'cross', 'circle'];
+      const style = styles[Math.floor(Math.random() * styles.length)];
+
+      ctx.fillStyle = c1;
+      ctx.fillRect(0, 0, w, h);
+
+      if (style === 'horizontal') {
+        ctx.fillStyle = c2;
+        ctx.fillRect(0, h / 3, w, h / 3);
+        ctx.fillStyle = c3;
+        ctx.fillRect(0, (2 * h) / 3, w, h / 3);
+      } else if (style === 'vertical') {
+        ctx.fillStyle = c2;
+        ctx.fillRect(w / 3, 0, w / 3, h);
+        ctx.fillStyle = c3;
+        ctx.fillRect((2 * w) / 3, 0, w / 3, h);
+      } else if (style === 'cross') {
+        ctx.fillStyle = c2;
+        ctx.fillRect(w / 2 - 10, 0, 20, h);
+        ctx.fillRect(0, h / 2 - 10, w, 20);
+      } else if (style === 'circle') {
+        ctx.fillStyle = c2;
+        ctx.beginPath();
+        ctx.arc(w / 2, h / 2, 22, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      currentFlagTexture = new THREE.CanvasTexture(canvas);
+      if (cityGroup.children.length > 0) {
+        generateCity();
+      }
+    }
+
+    // Save Flag Function
+    function saveFlag() {
+      const srcCanvas = document.getElementById('flagPreview');
+      const format = document.getElementById('flagFormat').value;
+      const cityName = document.getElementById('cityName').value.replace(/[^a-z0-9]/gi, '_').toLowerCase() || 'city';
+
+      const exportCanvas = document.createElement('canvas');
+      exportCanvas.width = 300;
+      exportCanvas.height = 200;
+      const ctx = exportCanvas.getContext('2d');
+      ctx.drawImage(srcCanvas, 0, 0, 300, 200);
+
+      let mimeType = 'image/png';
+      let extension = 'png';
+
+      if (format === 'jpeg') {
+        mimeType = 'image/jpeg';
+        extension = 'jpg';
+      } else if (format === 'ico') {
+        mimeType = 'image/x-icon';
+        extension = 'ico';
+      }
+
+      const dataURL = exportCanvas.toDataURL(mimeType);
+
+      const link = document.createElement('a');
+      link.download = `${cityName}_flag.${extension}`;
+      link.href = dataURL;
+      link.click();
+    }
+
+    // --- CAMERA MOVIE RECORDING LOGIC ---
+    function startCameraMovie() {
+      if (isRecordingMovie) return;
+
+      const canvasStream = renderer.domElement.captureStream(60);
+      recordedChunks = [];
+
+      // Determine supported MIME type (h264/mp4 format support)
+      let options = { mimeType: 'video/webm;codecs=h264' };
+      if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+        options = { mimeType: 'video/webm' };
+      }
+
+      try {
+        mediaRecorder = new MediaRecorder(canvasStream, options);
+      } catch (e) {
+        mediaRecorder = new MediaRecorder(canvasStream);
+      }
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          recordedChunks.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = saveMovieMP4;
+
+      mediaRecorder.start();
+      isRecordingMovie = true;
+      movieStartTime = performance.now();
+      controls.enabled = false; // Disable user controls while recording
+
+      document.getElementById('recStatus').style.display = 'block';
+      document.getElementById('movieBtn').innerText = '🎥 Recording Scene...';
+    }
+
+    function saveMovieMP4() {
+      // Export saved chunks as an MP4 container
+      const blob = new Blob(recordedChunks, { type: 'video/mp4' });
+      const url = URL.createObjectURL(blob);
+      const cityName = document.getElementById('cityName').value.replace(/[^a-z0-9]/gi, '_').toLowerCase() || 'city';
+
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${cityName}_movie.mp4`;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      document.getElementById('recStatus').style.display = 'none';
+      document.getElementById('movieBtn').innerText = '🎬 Movie Camera (AI Walkthrough)';
+      controls.enabled = true;
+    }
+
+    // Cleaned Road Texture
+    function createCleanRoadTexture() {
+      const canvas = document.createElement('canvas');
+      canvas.width = 64;
+      canvas.height = 64;
+      const ctx = canvas.getContext('2d');
+
+      ctx.fillStyle = '#222222';
+      ctx.fillRect(0, 0, 64, 64);
+
+      ctx.strokeStyle = '#ffcc00';
+      ctx.lineWidth = 3;
+      ctx.setLineDash([8, 8]);
+      ctx.beginPath();
+      ctx.moveTo(32, 0);
+      ctx.lineTo(32, 64);
+      ctx.stroke();
+
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.wrapS = THREE.RepeatWrapping;
+      texture.wrapT = THREE.RepeatWrapping;
+      return texture;
+    }
+
+    const roadTexture = createCleanRoadTexture();
+    const sidewalkMat = new THREE.MeshLambertMaterial({ color: 0xcccccc });
+
+    // 5. City Generation Logic
+    function generateCity() {
+      scene.remove(cityGroup);
+      cityGroup = new THREE.Group();
+      scene.add(cityGroup);
+
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      const size = 128;
+      canvas.width = size;
+      canvas.height = size;
+
+      ctx.fillStyle = "black";
+      ctx.fillRect(0, 0, size, size);
+
+      if (customUploadedImage) {
+        ctx.drawImage(customUploadedImage, 0, 0, size, size);
+      } else {
+        const text = document.getElementById("cityText").value.toUpperCase() || "YOYLE";
+        ctx.fillStyle = "white";
+        ctx.font = "bold 38px sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(text, size / 2, size / 2);
+      }
+
+      const imgData = ctx.getImageData(0, 0, size, size).data;
+      const buildingGeo = new THREE.BoxGeometry(1, 1, 1);
+      const sidewalkGeo = new THREE.BoxGeometry(3.6, 0.4, 3.6);
+      const roofGeo = new THREE.BoxGeometry(1.05, 0.2, 1.05);
+
+      const scaleFactor = 3;
+      const spacing = 3.6;
+      const gridOffset = size / 2;
+
+      const streetPositionsX = new Set();
+      const streetPositionsZ = new Set();
+
+      for (let x = 0; x < size; x += 2) {
+        for (let y = 0; y < size; y += 2) {
+          const index = (y * size + x) * 4;
+          const r = imgData[index];
+          const g = imgData[index + 1];
+          const b = imgData[index + 2];
+          const alpha = imgData[index + 3];
+
+          const brightness = (r + g + b) / 3;
+
+          const posX = (x - gridOffset) * spacing;
+          const posZ = (y - gridOffset) * spacing;
+
+          const isGridRoad = (x % 12 === 0 || y % 12 === 0);
+
+          if ((brightness > 40 || alpha > 50) && !isGridRoad) {
+            // Sidewalk Base
+            const sidewalk = new THREE.Mesh(sidewalkGeo, sidewalkMat);
+            sidewalk.position.set(posX, 0.2, posZ);
+            sidewalk.receiveShadow = true;
+            cityGroup.add(sidewalk);
+
+            let color;
+            if (customUploadedImage) {
+              color = new THREE.Color(r / 255, g / 255, b / 255);
+            } else {
+              color = new THREE.Color(Math.random(), Math.random(), Math.random());
+            }
+
+            const height = Math.floor(Math.random() * 45) + 12;
+            const mat = new THREE.MeshPhongMaterial({ color: color, flatShading: true });
+            const building = new THREE.Mesh(buildingGeo, mat);
+
+            building.position.set(posX, height / 2 + 0.4, posZ);
+            building.scale.set(scaleFactor, height, scaleFactor);
+            building.castShadow = true;
+            building.receiveShadow = true;
+            cityGroup.add(building);
+
+            // Roof Detail
+            const roofMat = new THREE.MeshPhongMaterial({ color: 0x333333 });
+            const roof = new THREE.Mesh(roofGeo, roofMat);
+            roof.position.set(posX, height + 0.5, posZ);
+            roof.scale.set(scaleFactor, 1, scaleFactor);
+            cityGroup.add(roof);
+
+          } else if (brightness > 20 || isGridRoad) {
+            if (x % 12 === 0) streetPositionsX.add(posX);
+            if (y % 12 === 0) streetPositionsZ.add(posZ);
+          }
+        }
+      }
+
+      // Render Clean Roads
+      const roadMat = new THREE.MeshLambertMaterial({ map: roadTexture });
+
+      streetPositionsZ.forEach(posZ => {
+        const roadGeo = new THREE.PlaneGeometry(size * spacing, spacing);
+        const road = new THREE.Mesh(roadGeo, roadMat);
+        road.rotation.x = -Math.PI / 2;
+        road.position.set(0, 0.05, posZ);
+        road.receiveShadow = true;
+        cityGroup.add(road);
+      });
+
+      streetPositionsX.forEach(posX => {
+        const roadGeo = new THREE.PlaneGeometry(spacing, size * spacing);
+        const road = new THREE.Mesh(roadGeo, roadMat);
+        road.rotation.x = -Math.PI / 2;
+        road.rotation.z = Math.PI / 2;
+        road.position.set(posX, 0.06, 0);
+        road.receiveShadow = true;
+        cityGroup.add(road);
+      });
+
+      // 3D Flag Pole
+      const poleGeo = new THREE.CylinderGeometry(0.8, 0.8, 65);
+      const poleMat = new THREE.MeshStandardMaterial({ color: 0xdddddd, metalness: 0.8, roughness: 0.2 });
+      const pole = new THREE.Mesh(poleGeo, poleMat);
+      pole.position.set(- (size * spacing) / 2 - 12, 32.5, 0);
+      pole.castShadow = true;
+      cityGroup.add(pole);
+
+      if (currentFlagTexture) {
+        const flagGeo = new THREE.PlaneGeometry(24, 16);
+        const flagMat = new THREE.MeshBasicMaterial({ map: currentFlagTexture, side: THREE.DoubleSide });
+        const flagMesh = new THREE.Mesh(flagGeo, flagMat);
+        flagMesh.position.set(- (size * spacing) / 2 + 1, 52, 0);
+        flagMesh.castShadow = true;
+        cityGroup.add(flagMesh);
+      }
+    }
+
+    // Initial Setup
+    generateRandomFlag();
+    generateCity();
+
+    // 6. Animation Loop (Handles standard orbit & camera movie recording)
+    function animate(timestamp) {
+      requestAnimationFrame(animate);
+
+      if (isRecordingMovie) {
+        const elapsed = timestamp - movieStartTime;
+        const progress = elapsed / movieDuration;
+
+        if (progress >= 1) {
+          isRecordingMovie = false;
+          if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+            mediaRecorder.stop();
+          }
+        } else {
+          // Cinematic camera movement path (Orbit & Altitude Wave)
+          const angle = progress * Math.PI * 2;
+          const radius = 240 + Math.sin(progress * Math.PI) * 60;
+          const height = 140 + Math.cos(progress * Math.PI * 2) * 50;
+
+          camera.position.x = Math.sin(angle) * radius;
+          camera.position.z = Math.cos(angle) * radius;
+          camera.position.y = height;
+          camera.lookAt(0, 20, 0);
+        }
+      } else {
+        controls.update();
+      }
+
+      renderer.render(scene, camera);
+    }
+    animate(0);
+
+    // Resize Handler
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  </script>
+</body>
+</html>

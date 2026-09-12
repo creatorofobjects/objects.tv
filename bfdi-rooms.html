@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BFDI Rooms - Objects.TV</title>
+    <link rel="icon" type="image/x-icon" href="Favicon.ico">
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #000;
+            font-family: Arial, sans-serif;
+            user-select: none;
+        }
+        #blocker {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #fff;
+            z-index: 10;
+        }
+        #instructions {
+            text-align: center;
+            cursor: pointer;
+            padding: 20px;
+            border: 2px solid #ff4d6d;
+            border-radius: 10px;
+            background: rgba(20, 0, 10, 0.8);
+        }
+        #game-over {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(150, 0, 0, 0.9);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #fff;
+            z-index: 20;
+        }
+        #game-over h1 {
+            font-size: 50px;
+            margin: 0 0 10px 0;
+            color: #ff0000;
+            text-shadow: 2px 2px #000;
+        }
+        #restart-btn {
+            padding: 12px 24px;
+            font-size: 18px;
+            background: #fff;
+            color: #000;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            border-radius: 5px;
+        }
+        #hud {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            color: #ff99cc;
+            font-size: 18px;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px #000;
+        }
+        #warning-text {
+            position: absolute;
+            top: 20%;
+            width: 100%;
+            text-align: center;
+            color: #ff3333;
+            font-size: 28px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            text-shadow: 2px 2px 8px #000;
+            opacity: 0;
+            transition: opacity 1.5s ease-in-out;
+            pointer-events: none;
+            z-index: 5;
+        }
+    </style>
+    <!-- Three.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+
+    <div id="blocker">
+        <div id="instructions">
+            <h1 style="color: #ff99cc; margin-top: 0;">BFDI ROOMS</h1>
+            <p><strong>Playing as: Match</strong></p>
+            <p>Use <strong>W, A, S, D</strong> to Move</p>
+            <p>Use <strong>Mouse</strong> to Look Around</p>
+            <p style="color: #ff4d6d;">⚠️ Stay far away from the Entity!</p>
+            <h2 style="color: #ffcc00; margin-bottom: 0;">CLICK TO START</h2>
+        </div>
+    </div>
+
+    <div id="warning-text">The Entity can hear you breathe</div>
+
+    <div id="game-over">
+        <h1>GAME OVER</h1>
+        <p>The entity got way too close to Match!</p>
+        <button id="restart-btn" onclick="location.reload()">Try Again</button>
+    </div>
+
+    <div id="hud">Player: Match</div>
+
+    <script>
+        // --- 1. SCENE SETUP ---
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x050505);
+        scene.fog = new THREE.FogExp2(0x050505, 0.05);
+
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Flashlight
+        const flashlight = new THREE.SpotLight(0xffffff, 1.5, 50, Math.PI / 6, 0.5);
+        camera.add(flashlight);
+        flashlight.position.set(0, 0, 1);
+        flashlight.target = camera;
+        scene.add(camera);
+
+        const ambientLight = new THREE.AmbientLight(0x222222);
+        scene.add(ambientLight);
+
+        // --- 2. MAP SETUP ---
+        const wallMaterial = new THREE.MeshBasicMaterial({ color: 0x222228 });
+        const floorMaterial = new THREE.MeshBasicMaterial({ color: 0x111115 });
+
+        // Larger Floor
+        const floorGeo = new THREE.PlaneGeometry(200, 200);
+        const floor = new THREE.Mesh(floorGeo, floorMaterial);
+        floor.rotation.x = -Math.PI / 2;
+        scene.add(floor);
+
+        // Outer Walls
+        function createWall(w, h, d, x, y, z) {
+            const geo = new THREE.BoxGeometry(w, h, d);
+            const wall = new THREE.Mesh(geo, wallMaterial);
+            wall.position.set(x, y, z);
+            scene.add(wall);
+        }
+        createWall(200, 12, 1, 0, 6, -100);
+        createWall(200, 12, 1, 0, 6, 100);
+        createWall(1, 12, 200, -100, 6, 0);
+        createWall(1, 12, 200, 100, 6, 0);
+
+        // Internal obstacles
+        createWall(20, 12, 20, -30, 6, -30);
+        createWall(20, 12, 20, 30, 6, 30);
+        createWall(20, 12, 20, -30, 6, 30);
+        createWall(20, 12, 20, 30, 6, -30);
+
+        // --- 3. ENTITY SETUP (SPAWNS FAR AWAY) ---
+        const entityGroup = new THREE.Group();
+        const entityGeo = new THREE.SphereGeometry(1.8, 16, 16);
+        const entityMat = new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true });
+        const entityMesh = new THREE.Mesh(entityGeo, entityMat);
+        entityGroup.add(entityMesh);
+
+        // Glowing Eyes
+        const eyeGeo = new THREE.SphereGeometry(0.35, 8, 8);
+        const eyeMat = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+        const leftEye = new THREE.Mesh(eyeGeo, eyeMat);
+        leftEye.position.set(-0.6, 0.4, 1.4);
+        const rightEye = new THREE.Mesh(eyeGeo, eyeMat);
+        rightEye.position.set(0.6, 0.4, 1.4);
+        entityGroup.add(leftEye);
+        entityGroup.add(rightEye);
+
+        // Entity starts far away at Z = -80
+        entityGroup.position.set(0, 2.5, -80);
+        scene.add(entityGroup);
+
+        // --- 4. CONTROLS & STEP TRACKER ---
+        camera.position.set(0, 3, 70); // Match starts far away at Z = 70
+
+        let moveForward = false;
+        let moveBackward = false;
+        let moveLeft = false;
+        let moveRight = false;
+        let isGameOver = false;
+
+        // Step Counter logic
+        let totalDistanceWalked = 0;
+        let stepCount = 0;
+        let lastPosition = camera.position.clone();
+        let messageShown = false;
+
+        const blocker = document.getElementById('blocker');
+        const instructions = document.getElementById('instructions');
+        const warningText = document.getElementById('warning-text');
+
+        instructions.addEventListener('click', () => {
+            document.body.requestPointerLock();
+        });
+
+        document.addEventListener('pointerlockchange', () => {
+            if (document.pointerLockElement === document.body) {
+                blocker.style.display = 'none';
+            } else if (!isGameOver) {
+                blocker.style.display = 'flex';
+            }
+        });
+
+        // Mouse Look
+        let yaw = 0;
+        let pitch = 0;
+        document.addEventListener('mousemove', (event) => {
+            if (document.pointerLockElement === document.body && !isGameOver) {
+                yaw -= event.movementX * 0.002;
+                pitch -= event.movementY * 0.002;
+                pitch = Math.max(-Math.PI / 2.2, Math.min(Math.PI / 2.2, pitch));
+                camera.rotation.set(pitch, yaw, 0, 'YXZ');
+            }
+        });
+
+        // Key Controls
+        document.addEventListener('keydown', (e) => {
+            switch (e.code) {
+                case 'KeyW': moveForward = true; break;
+                case 'KeyS': moveBackward = true; break;
+                case 'KeyA': moveLeft = true; break;
+                case 'KeyD': moveRight = true; break;
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            switch (e.code) {
+                case 'KeyW': moveForward = false; break;
+                case 'KeyS': moveBackward = false; break;
+                case 'KeyA': moveLeft = false; break;
+                case 'KeyD': moveRight = false; break;
+            }
+        });
+
+        // --- 5. GAME LOOP ---
+        const clock = new THREE.Clock();
+        const moveSpeed = 12.0;
+        const entitySpeed = 6.5; // Slightly slower approach so you can walk around
+        const gameOverDistance = 3.5;
+
+        function animate() {
+            if (isGameOver) return;
+            requestAnimationFrame(animate);
+
+            const delta = clock.getDelta();
+
+            if (document.pointerLockElement === document.body) {
+                const forward = new THREE.Vector3(0, 0, -1).applyAxisAngle(new THREE.Vector3(0, 1, 0), yaw);
+                const side = new THREE.Vector3(1, 0, 0).applyAxisAngle(new THREE.Vector3(0, 1, 0), yaw);
+
+                if (moveForward) camera.position.addScaledVector(forward, moveSpeed * delta);
+                if (moveBackward) camera.position.addScaledVector(forward, -moveSpeed * delta);
+                if (moveLeft) camera.position.addScaledVector(side, -moveSpeed * delta);
+                if (moveRight) camera.position.addScaledVector(side, moveSpeed * delta);
+
+                // Keep Match inside map bounds
+                camera.position.x = Math.max(-95, Math.min(95, camera.position.x));
+                camera.position.z = Math.max(-95, Math.min(95, camera.position.z));
+
+                // Track movement distance to count steps
+                const distMoved = camera.position.distanceTo(lastPosition);
+                totalDistanceWalked += distMoved;
+                lastPosition.copy(camera.position);
+
+                // 1 step is roughly ~2.2 units of distance
+                stepCount = Math.floor(totalDistanceWalked / 2.2);
+
+                // Show text once 30 steps are reached
+                if (stepCount >= 30 && !messageShown) {
+                    messageShown = true;
+                    warningText.style.opacity = '1';
+                    setTimeout(() => {
+                        warningText.style.opacity = '0';
+                    }, 4000);
+                }
+            }
+
+            // Entity chases Match
+            const directionToMatch = new THREE.Vector3().subVectors(camera.position, entityGroup.position);
+            directionToMatch.y = 0;
+            const distance = directionToMatch.length();
+
+            if (distance > 0.1) {
+                directionToMatch.normalize();
+                entityGroup.position.addScaledVector(directionToMatch, entitySpeed * delta);
+                entityGroup.lookAt(camera.position.x, entityGroup.position.y, camera.position.z);
+            }
+
+            // Game over check
+            if (distance < gameOverDistance) {
+                triggerGameOver();
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        function triggerGameOver() {
+            isGameOver = true;
+            document.exitPointerLock();
+            document.getElementById('game-over').style.display = 'flex';
+        }
+
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
