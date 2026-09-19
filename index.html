@@ -4,14 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Objects.TV - What's Objects & questions</title>
-    <!-- Site Favicon Link -->
     <link rel="icon" type="image/x-icon" href="Favicon.ico">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
     <header>
-        <!-- Link main header to your YouTube playlist -->
         <a href="https://youtube.com/playlist?list=PL7WUbzvwVPvufmp0OMMHF4gjt9aI3tnQb&si=TscJaMl3jSfvZcD6" target="_blank" style="font-size: 2em; font-weight: bold; text-decoration: underline; color: black;">Objects.TV</a><br><br>
         <nav>
             <a href="index.html">Main</a> | 
@@ -39,7 +37,6 @@
         <section style="margin-top: 2rem;">
             <h2>If you don't know the OSC</h2>
             <br>
-            
             <div class="faq-item">
                 <h3>Q: What is the OSC?</h3>
                 <p>A: The OSC is a community of creators and fans who create and watch animated shows featuring anthropomorphic objects.</p>
@@ -58,14 +55,10 @@
 
     <script>
         document.addEventListener('keydown', function(event) {
-            // Check if the pressed key is 'n' or 'N'
             if (event.key === 'n' || event.key === 'N') {
-                // Create a temporary hidden link element
                 const link = document.createElement('a');
                 link.href = 'to_do_list.png';
                 link.download = 'to_do_list.png';
-                
-                // Trigger the download automatically
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
