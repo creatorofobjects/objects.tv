@@ -1,26 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Objects.TV - What's Objects & questions</title>
     <!-- Site Favicon Link -->
     <link rel="icon" type="image/x-icon" href="Favicon.ico">
-</head>
- <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Objects.TV - What's Objects & questions</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
     <header>
-      <!-- Link main header to your YouTube playlist -->
-    <a href="https://youtube.com/playlist?list=PL7WUbzvwVPvufmp0OMMHF4gjt9aI3tnQb&si=TscJaMl3jSfvZcD6" target="_blank" style="font-size: 2em; font-weight: bold; text-decoration: underline; color: black;">Objects.TV</a><br><br>
+        <!-- Link main header to your YouTube playlist -->
+        <a href="https://youtube.com/playlist?list=PL7WUbzvwVPvufmp0OMMHF4gjt9aI3tnQb&si=TscJaMl3jSfvZcD6" target="_blank" style="font-size: 2em; font-weight: bold; text-decoration: underline; color: black;">Objects.TV</a><br><br>
+        <nav>
             <a href="index.html">Main</a> | 
-<a href="whats-objects.html">What's Objects</a> | 
-<a href="ask.html">Ask Teardrop Gaming OSC</a> | 
-<a href="games.html">Games</a>
+            <a href="whats-objects.html">What's Objects</a> | 
+            <a href="ask.html">Ask Teardrop Gaming OSC</a> | 
+            <a href="games.html">Games</a> | 
+            <a href="assets.html">Assets</a>
         </nav>
     </header>
 
@@ -34,7 +32,7 @@
             <h2>About the Show</h2>
             <br>
             <div class="faq-item">
-                <p>"Objects" is an exciting Object Show where living everyday objects compete,and vote eachother off the game!</p>
+                <p>"Objects" is an exciting Object Show where living everyday objects compete, and vote each other off the game!</p>
             </div>
         </section>
 
@@ -43,7 +41,7 @@
             <br>
             
             <div class="faq-item">
-                <h3>Q:What is the OSC ?</h3>
+                <h3>Q: What is the OSC?</h3>
                 <p>A: The OSC is a community of creators and fans who create and watch animated shows featuring anthropomorphic objects.</p>
             </div>
 
@@ -57,21 +55,22 @@
     <footer>
         <p>&copy; Objects.TV. All rights reserved.</p>
     </footer>
-<script>
-    document.addEventListener('keydown', function(event) {
-        // Check if the pressed key is 'n' or 'N'
-        if (event.key === 'n' || event.key === 'N') {
-            // Create a temporary hidden link element
-            const link = document.createElement('a');
-            link.href = 'to_do_list.png';
-            link.download = 'to_do_list.png';
-            
-            // Trigger the download automatically
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-    });
-</script>
+
+    <script>
+        document.addEventListener('keydown', function(event) {
+            // Check if the pressed key is 'n' or 'N'
+            if (event.key === 'n' || event.key === 'N') {
+                // Create a temporary hidden link element
+                const link = document.createElement('a');
+                link.href = 'to_do_list.png';
+                link.download = 'to_do_list.png';
+                
+                // Trigger the download automatically
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        });
+    </script>
 </body>
 </html>
