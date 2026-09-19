@@ -1,67 +1,76 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
- <!-- Site Favicon Link -->
-    <link rel="icon" type="image/x-icon" href="Favicon.ico">
-</head>
-<meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Objects.TV - Ask Teardrop Gaming OSC</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/x-icon" href="Favicon.ico">
+    <style>
+        body {
+            font-family: Times, "Times New Roman", serif;
+            margin: 20px;
+            background-color: #ffffff;
+            color: #000000;
+        }
+        a {
+            color: #0000ee;
+        }
+        a:visited {
+            color: #551a8b;
+        }
+        .form-group {
+            margin-bottom: 10px;
+        }
+        label {
+            display: inline-block;
+            width: 150px;
+            vertical-align: top;
+        }
+        input[type="text"], textarea {
+            font-family: Arial, sans-serif;
+        }
+    </style>
 </head>
 <body>
 
-    <header>
-        <!-- Link main header to your YouTube playlist -->
-    <!-- Updated Navigation Header -->
-<a href="https://youtube.com/playlist?list=PL7WUbzvwVPvufmp0OMMHF4gjt9aI3tnQb&si=TscJaMl3jSfvZcD6" target="_blank" style="font-size: 2em; font-weight: bold; text-decoration: underline; color: black;">Objects.TV</a><br><br>
+    <!-- Header Navigation -->
+    <a href="https://youtube.com/playlist?list=PL7WUbzvwVPvufmp0OMMHF4gjt9aI3tnQb&si=TscJaMl3jSfvZcD6" target="_blank" style="font-size: 2em; font-weight: bold; text-decoration: underline; color: black;">Objects.TV</a><br><br>
 
-<a href="index.html">Main</a> | 
-<a href="whats-objects.html">What's Objects</a> | 
-<a href="ask.html">Ask Teardrop Gaming OSC</a> | 
-<a href="games.html">Games</a> |
-<a href="assets.html">Assets</a>
-        </nav>
-    </header>
+    <a href="index.html">Main</a> | 
+    <a href="whats-objects.html">What's Objects</a> | 
+    <a href="ask.html">Ask Teardrop Gaming OSC</a> | 
+    <a href="games.html">Games</a> |
+    <a href="assets.html">Assets</a>
 
-    <div class="container">
-        <section class="hero">
-            <h1>Ask Teardrop Gaming OSC</h1>
-            <p>Have a question or fan message? Send an email directly to the creator!</p>
-        </section>
+    <h1>Ask Teardrop Gaming OSC</h1>
+    <p>Have a question or fan message? Send an email directly to the creator!</p>
 
-        <div class="contact-form">
-            <form action="mailto:creatorofobjects2@gmail.com" method="post" enctype="text/plain">
-                <div class="form-group">
-                    <label for="name">Your Name / Username:</label>
-                    <input type="text" id="name" name="Name" required placeholder="Enter your name">
-                </div>
-
-                <div class="form-group">
-                    <label for="subject">Subject:</label>
-                    <input type="text" id="subject" name="Subject" required placeholder="Question about Objects...">
-                </div>
-
-                <div class="form-group">
-                    <label for="message">Your Question / Message:</label>
-                    <textarea id="message" name="Message" rows="6" required placeholder="Type your message here..."></textarea>
-                </div>
-
-                <button type="submit" class="btn-submit">Send Email</button>
-            </form>
-            <br>
-            <p style="text-align: center; color: #aaa; font-size: 0.9rem;">
-                Or email directly at: <a href="mailto:creatorofobjects2@gmail.com" style="color: #ff4757;">creatorofobjects2@gmail.com</a>
-            </p>
+    <!-- Question Form -->
+    <form action="mailto:creatorofobjects2@gmail.com" method="post" enctype="text/plain">
+        <div class="form-group">
+            <label for="name">Your Name / Username:</label>
+            <input type="text" id="name" name="Name" placeholder="Enter your name" size="30">
         </div>
-    </div>
+        
+        <div class="form-group">
+            <label for="subject">Subject:</label>
+            <input type="text" id="subject" name="Subject" value="Question about Objects..." size="30">
+        </div>
 
-    <footer>
-        <p>&copy; Objects.TV. All rights reserved.</p>
-    </footer>
+        <div class="form-group">
+            <label for="message">Your Question / Message:</label>
+            <textarea id="message" name="Message" rows="6" cols="35" placeholder="Type your message here..."></textarea>
+        </div>
+
+        <input type="submit" value="Send Email">
+    </form>
+
+    <br><br>
+    <p style="text-align: center; color: #666666;">Or email directly at: <a href="mailto:creatorofobjects2@gmail.com" style="color: red;">creatorofobjects2@gmail.com</a></p>
+
+    <hr>
+
+    <p>© Objects.TV. All rights reserved.</p>
 
 </body>
 </html>
